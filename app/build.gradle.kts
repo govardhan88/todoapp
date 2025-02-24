@@ -48,5 +48,5 @@ dependencies {
     implementation(libs.androidx.activity.compose)
     implementation(libs.bundles.compose)
     implementation(platform(libs.androidx.compose.bom))
-    androidTestImplementation(libs.bundles.unit.tests)
+    testImplementation(libs.bundles.unit.tests)
 }
