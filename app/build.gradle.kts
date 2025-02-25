@@ -31,7 +31,7 @@ android {
         packaging.resources.excludes.add("META-INF/gradle/incremental.annotation.processors")
         packaging.resources.excludes.add("META-INF/NOTICE.md")
     }
-    buildFeatures{
+    buildFeatures {
         compose = true
     }
     compileOptions {
@@ -52,5 +52,12 @@ dependencies {
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.hilt.android)
     ksp(libs.hilt.android.compiler)
+    implementation(libs.bundles.room)
+    ksp(libs.androidx.room.compiler)
+    implementation(libs.kotlinx.coroutines.android)
+
+    implementation(project(":data"))
+    implementation(project(":domain"))
+
     testImplementation(libs.bundles.unit.tests)
 }
