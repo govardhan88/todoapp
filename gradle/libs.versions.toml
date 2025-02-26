@@ -13,6 +13,9 @@ hilt-android = "2.51.1"
 ksp-version = "2.0.21-1.0.27"
 androidx-room = "2.6.1"
 kotlinx-coroutines-android = "1.10.1"
+kotlinx-coroutines-test = "1.7.3"
+mockito = "4.11.0"
+turbine = "1.0.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -31,11 +34,18 @@ androidx-room-runtime = { group = "androidx.room", name = "room-runtime", versio
 androidx-room-ktx = { group = "androidx.room", name = "room-ktx", version.ref = "androidx-room" }
 androidx-room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "androidx-room" }
 kotlinx-coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version.ref = "kotlinx-coroutines-android" }
+kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "kotlinx-coroutines-test" }
+mockito-core = { group = "org.mockito", name = "mockito-core", version.ref = "mockito" }
+turbine = { group = "app.cash.turbine", name = "turbine", version.ref = "turbine" }
+
 
 [bundles]
 unit-tests = ["junit", "androidx-junit"]
 compose = ["androidx-compose-ui", "androidx-compose-ui-graphics", "androidx-compose-ui-tooling-preview", "androidx-compose-material3"]
 room = ["androidx-room-ktx", "androidx-room-runtime"]
+coroutines-test = ["kotlinx-coroutines-test"]
+mockito = ["mockito-core"]
+turbine = ["turbine"]
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

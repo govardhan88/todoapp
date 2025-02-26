@@ -34,4 +34,7 @@ dependencies {
     implementation(project(":domain"))
 
     testImplementation(libs.bundles.unit.tests)
+    testImplementation(libs.bundles.coroutines.test)
+    testImplementation(libs.bundles.mockito)
+    testImplementation(libs.bundles.turbine)
 }
