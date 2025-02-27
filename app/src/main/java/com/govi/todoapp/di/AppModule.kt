@@ -8,6 +8,8 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
 import javax.inject.Singleton
 
 /**
@@ -26,5 +28,9 @@ object AppModule {
             "todo_db"
         ).build()
     }
+
+    @Provides
+    @Singleton
+    fun provideIODispatcher(): CoroutineDispatcher = Dispatchers.IO
 
 }

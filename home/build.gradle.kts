@@ -28,7 +28,7 @@ android {
         compose = true
     }
     composeOptions {
-        kotlinCompilerExtensionVersion = "1.5.10" // Match the compiler dependency version
+        kotlinCompilerExtensionVersion = "1.5.10"
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
@@ -43,6 +43,7 @@ dependencies {
     implementation(libs.androidx.core.ktx)
 
     implementation(project(":domain"))
+    implementation(project(":core"))
 
     implementation(libs.androidx.appcompat)
     implementation(libs.kotlinx.coroutines.android)

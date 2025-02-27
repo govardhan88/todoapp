@@ -5,4 +5,5 @@ package com.govi.todoapp.core.navigation
  */
 sealed class Routes(val route: String) {
     object Home: Routes("home")
+    object AddTodo : Routes("add_todo")
 }

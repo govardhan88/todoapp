@@ -2,12 +2,14 @@ package com.govi.todoapp.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.navigation.NavHostController
+import com.govi.todoapp.core.navigation.Routes.AddTodo
+import com.govi.todoapp.core.util.UIState
 import com.govi.todoapp.domain.GetTodosUseCase
-import com.govi.todoapp.domain.model.Todo
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
@@ -17,11 +19,13 @@ import javax.inject.Inject
  */
 @HiltViewModel
 class HomeViewModel @Inject constructor(
-    private val getTodosUseCase: GetTodosUseCase
-): ViewModel() {
+    private val getTodosUseCase: GetTodosUseCase,
+    private val navHostController: NavHostController
+) : ViewModel() {
 
-    private val _todos = MutableStateFlow<List<Todo>>(emptyList())
-    val todos: StateFlow<List<Todo>> = _todos
+    private val _uiState = MutableStateFlow<UIState>(UIState.Loading)
+    val uiState = _uiState.asStateFlow()
+
 
     init {
         loadTodos()
@@ -29,12 +33,22 @@ class HomeViewModel @Inject constructor(
 
     private fun loadTodos() {
         viewModelScope.launch(Dispatchers.IO) {
-            getTodosUseCase().collect { todos ->
+            _uiState.value = UIState.Loading
+            try {
+                getTodosUseCase().collect { todos ->
+                    withContext(Dispatchers.Main) {
+                        _uiState.value = UIState.Success(todos)
+                    }
+                }
+            } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
-                    _todos.value = todos
+                    _uiState.value = UIState.Error(e.message ?: "An unknown error occurred")
                 }
             }
         }
     }
 
+    fun navigateToAddTodo() {
+        navHostController.navigate(AddTodo.route)
+    }
 }

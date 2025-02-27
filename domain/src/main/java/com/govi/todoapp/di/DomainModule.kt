@@ -1,5 +1,6 @@
 package com.govi.todoapp.di
 
+import com.govi.todoapp.domain.AddTodoUseCase
 import com.govi.todoapp.domain.GetTodosUseCase
 import com.govi.todoapp.domain.TodoRepository
 import dagger.Module
@@ -21,4 +22,8 @@ object DomainModule {
     fun provideGetTodosUseCase(repository: TodoRepository): GetTodosUseCase =
         GetTodosUseCase(repository)
 
+    @Provides
+    @Singleton
+    fun provideAddTodoUseCase(repository: TodoRepository): AddTodoUseCase =
+        AddTodoUseCase(repository)
 }
