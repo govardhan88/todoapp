@@ -4,24 +4,31 @@ plugins {
     alias(libs.plugins.ksp)
     alias(libs.plugins.hilt)
     id("kotlin-kapt")
+    alias(libs.plugins.kotlin.compose)
 }
 
 android {
-    namespace = "com.govi.todoapp.domain"
+    namespace = "com.govi.todoapp.home"
     compileSdk = 35
 
     defaultConfig {
         minSdk = 24
+
     }
 
     buildTypes {
         release {
             isMinifyEnabled = false
             proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
+
             )
         }
+    }
+    buildFeatures {
+        compose = true
+    }
+    composeOptions {
+        kotlinCompilerExtensionVersion = "1.5.10" // Match the compiler dependency version
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
@@ -33,10 +40,16 @@ android {
 }
 
 dependencies {
-
     implementation(libs.androidx.core.ktx)
+
+    implementation(project(":domain"))
+
+    implementation(libs.androidx.appcompat)
+    implementation(libs.kotlinx.coroutines.android)
+    implementation(platform(libs.androidx.compose.bom))
+    implementation(libs.bundles.compose)
+    implementation(libs.bundles.lifecycle)
+    implementation(libs.hilt.navigation.compose)
     implementation(libs.hilt.android)
     ksp(libs.hilt.android.compiler)
-
-    testImplementation(libs.bundles.unit.tests)
 }

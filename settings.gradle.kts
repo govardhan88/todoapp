@@ -24,3 +24,5 @@ rootProject.name = "ToDoApp"
 include(":app")
 include(":data")
 include(":domain")
+include(":home")
+include(":core")

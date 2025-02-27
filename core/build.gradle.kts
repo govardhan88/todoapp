@@ -4,10 +4,11 @@ plugins {
     alias(libs.plugins.ksp)
     alias(libs.plugins.hilt)
     id("kotlin-kapt")
+    alias(libs.plugins.kotlin.compose)
 }
 
 android {
-    namespace = "com.govi.todoapp.domain"
+    namespace = "com.govi.todoapp.core"
     compileSdk = 35
 
     defaultConfig {
@@ -23,6 +24,12 @@ android {
             )
         }
     }
+    buildFeatures {
+        compose = true
+    }
+    composeOptions {
+        kotlinCompilerExtensionVersion = "1.5.10" // Match the compiler dependency version
+    }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
@@ -35,8 +42,11 @@ android {
 dependencies {
 
     implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.appcompat)
+    implementation(libs.androidx.activity.compose)
+    implementation(libs.bundles.compose)
+    implementation(platform(libs.androidx.compose.bom))
+    implementation(libs.bundles.hilt.navigation)
     implementation(libs.hilt.android)
     ksp(libs.hilt.android.compiler)
-
-    testImplementation(libs.bundles.unit.tests)
 }

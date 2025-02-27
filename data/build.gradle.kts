@@ -2,6 +2,8 @@ plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.ksp)
+    alias(libs.plugins.hilt)
+    id("kotlin-kapt")
 }
 
 android {
@@ -26,9 +28,9 @@ dependencies {
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.hilt.android)
-    ksp(libs.hilt.android.compiler)
+  ksp(libs.hilt.android.compiler)
     implementation(libs.bundles.room)
-    ksp(libs.androidx.room.compiler)
+  ksp(libs.androidx.room.compiler)
     implementation(libs.kotlinx.coroutines.android)
 
     implementation(project(":domain"))
