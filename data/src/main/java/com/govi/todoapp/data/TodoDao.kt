@@ -2,6 +2,7 @@ package com.govi.todoapp.data
 
 import androidx.room.Dao
 import androidx.room.Insert
+import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import com.govi.todoapp.data.model.TodoEntity
 import kotlinx.coroutines.flow.Flow
@@ -15,6 +16,6 @@ interface TodoDao {
     @Query("SELECT * FROM Event")
     fun getAll(): Flow<List<TodoEntity>>
 
-    @Insert
-    suspend fun insert(todoEntity: TodoEntity)
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insert(todoEntity: TodoEntity):Long
 }

@@ -8,5 +8,5 @@ import kotlinx.coroutines.flow.Flow
  */
 interface TodoRepository {
     suspend fun getAllTodos(): Flow<List<Todo>>
-    suspend fun addTodo(todo: Todo)
+    suspend fun addTodo(todo: Todo): Long
 }

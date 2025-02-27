@@ -15,7 +15,7 @@ class TodoRepositoryImpl(private val dao: TodoDao) : TodoRepository {
         todoEntities.map { it.mapToDomain() }
     }
 
-    override suspend fun addTodo(todo: Todo) {
-        dao.insert(TodoEntity(eventTitle = todo.eventTitle))
+    override suspend fun addTodo(todo: Todo):Long {
+        return dao.insert(TodoEntity(eventTitle = todo.eventTitle))
     }
 }
