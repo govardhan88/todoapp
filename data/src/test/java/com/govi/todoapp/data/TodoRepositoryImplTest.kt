@@ -1,41 +1,70 @@
 package com.govi.todoapp.data
 
-import app.cash.turbine.test
 import com.govi.todoapp.data.model.TodoEntity
 import com.govi.todoapp.domain.model.Todo
-import junit.framework.TestCase.assertEquals
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.test.runTest
+import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
-import org.mockito.Mockito.mock
+import org.mockito.Mock
 import org.mockito.Mockito.verify
-import org.mockito.kotlin.whenever
+import org.mockito.Mockito.`when`
+import org.mockito.MockitoAnnotations
+import org.mockito.kotlin.times
 
-/**
- * Created by Govi on 26,February,2025
- */
+class TodoRepositoryTest {
 
-
-/**
- * Created by Govi on 27,February,2025
- */
-@OptIn(ExperimentalCoroutinesApi::class)
-class TodoRepositoryImplTest {
-
+    @Mock
     private lateinit var todoDao: TodoDao
+
     private lateinit var todoRepository: TodoRepositoryImpl
 
     @Before
-    fun setUp() {
-        todoDao = mock()
+    fun setup() {
+        MockitoAnnotations.openMocks(this)
         todoRepository = TodoRepositoryImpl(todoDao)
     }
 
     @Test
-    fun `getAllTodos should return a flow of list of todos`() = runTest {
-        // Arrange
+    fun `getAllTodos returns mapped todos`() = runTest {
+        val todoEntities = listOf(
+            TodoEntity(id = 1, eventTitle = "Todo 1"),
+            TodoEntity(id = 2, eventTitle = "Todo 2")
+        )
+        val todos =
+            listOf(Todo(id = "1", eventTitle = "Todo 1"), Todo(id = "2", eventTitle = "Todo 2"))
+        `when`(todoDao.getAll()).thenReturn(flowOf(todoEntities))
+
+        val result = todoRepository.getAllTodos().toList()
+        assertEquals(listOf(todos), result)
+    }
+
+    @Test
+    fun `addTodo inserts todo entity`() = runTest {
+        val todo = Todo(id = null, eventTitle = "Todo 1")
+        val todoEntity = TodoEntity(eventTitle = "Todo 1")
+        `when`(todoDao.insert(todoEntity)).thenReturn(1L)
+
+        val result = todoRepository.addTodo(todo)
+        assertEquals(1L, result)
+        verify(todoDao, times(1)).insert(todoEntity)
+    }
+
+    @Test
+    fun `searchTodos returns mapped todos`() = runTest {
+        val query = "Test"
+        val todoEntities = listOf(TodoEntity(id = 1, eventTitle = "Test Todo 1"))
+        val todos = listOf(Todo(id = "1", eventTitle = "Test Todo 1"))
+        `when`(todoDao.searchTodos(query)).thenReturn(flowOf(todoEntities))
+
+        val result = todoRepository.searchTodos(query).toList()
+        assertEquals(listOf(todos), result)
+    }
+
+    @Test
+    fun `mapToDomain maps TodoEntity to Todo`() = runTest {
         val todoEntities = listOf(
             TodoEntity(id = 1, eventTitle = "Todo 1"),
             TodoEntity(id = 2, eventTitle = "Todo 2")
@@ -44,41 +73,9 @@ class TodoRepositoryImplTest {
             Todo(id = "1", eventTitle = "Todo 1"),
             Todo(id = "2", eventTitle = "Todo 2")
         )
-        whenever(todoDao.getAll()).thenReturn(flowOf(todoEntities))
 
-        // Act
-        val result = todoRepository.getAllTodos()
-
-        // Assert
-        result.test {
-            val actualTodos = awaitItem()
-            assertEquals(expectedTodos, actualTodos)
-            awaitComplete()
-        }
-        verify(todoDao).getAll()
-    }
-
-    @Test
-    fun `addTodo should insert a todo and return the row id`() = runTest {
-        // Arrange
-        val todo = Todo(eventTitle = "New Todo", id = "1")
-        val todoEntity = TodoEntity(eventTitle = "New Todo")
-        val expectedRowId = 1L
-        whenever(todoDao.insert(todoEntity)).thenReturn(expectedRowId)
-
-        // Act
-        val result = todoRepository.addTodo(todo)
-
-        // Assert
-        assertEquals(expectedRowId, result)
-        verify(todoDao).insert(todoEntity)
-    }
-
-    @Test
-    fun `mapToDomain should correctly map TodoEntity to Todo`() {
-        val todoEntity = TodoEntity(id = 1, eventTitle = "Test Task")
-        val expectedTodo = Todo(id = "1", eventTitle = "Test Task")
-
-        assertEquals(expectedTodo, todoEntity.mapToDomain())
+        `when`(todoDao.getAll()).thenReturn(flowOf(todoEntities))
+        val result = todoRepository.getAllTodos().toList()
+        assertEquals(listOf(expectedTodos), result)
     }
 }
