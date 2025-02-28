@@ -18,4 +18,7 @@ interface TodoDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(todoEntity: TodoEntity):Long
+
+    @Query("SELECT * FROM Event WHERE eventTitle LIKE '%' || :query || '%'")
+    fun searchTodos(query: String): Flow<List<TodoEntity>>
 }

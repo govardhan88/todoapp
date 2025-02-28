@@ -11,11 +11,17 @@ import kotlinx.coroutines.flow.map
  */
 
 class TodoRepositoryImpl(private val dao: TodoDao) : TodoRepository {
-    override suspend fun getAllTodos(): Flow<List<Todo>> = dao.getAll().map { todoEntities ->
+    override suspend fun getAllTodos(): Flow<List<Todo>> = dao.getAll().mapToDomain()
+
+    override suspend fun addTodo(todo: Todo): Long {
+        return dao.insert(TodoEntity(eventTitle = todo.eventTitle))
+    }
+
+    override suspend fun searchTodos(query: String): Flow<List<Todo>> =
+        dao.searchTodos(query).mapToDomain()
+
+    private fun Flow<List<TodoEntity>>.mapToDomain() = this.map { todoEntities ->
         todoEntities.map { it.mapToDomain() }
     }
 
-    override suspend fun addTodo(todo: Todo):Long {
-        return dao.insert(TodoEntity(eventTitle = todo.eventTitle))
-    }
 }

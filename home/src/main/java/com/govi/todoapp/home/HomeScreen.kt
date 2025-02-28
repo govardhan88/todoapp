@@ -44,7 +44,6 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.govi.todoapp.core.SharedViewModel
 import com.govi.todoapp.core.util.UIState
 import com.govi.todoapp.domain.model.Todo
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 /**
@@ -56,7 +55,10 @@ fun HomeScreen(
     sharedViewModel: SharedViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val filteredTodos by viewModel.filteredTodos.collectAsState()
+    val allTodos by viewModel.allTodos.collectAsState()
     var searchText by remember { mutableStateOf("") }
+    val showSearchBar = allTodos.isNotEmpty()
 
     val errorMessage by sharedViewModel.errorMessage.collectAsState()
     val scope = rememberCoroutineScope()
@@ -66,9 +68,11 @@ fun HomeScreen(
         errorMessage?.let { errorMsg ->
             scope.launch {
                 snackbarHostState.showSnackbar(errorMsg)
-                delay(2500L)
                 sharedViewModel.clearErrorMessage()
             }
+        }
+        if (errorMessage == null) {
+            viewModel.loadTodos()
         }
     }
 
@@ -89,6 +93,29 @@ fun HomeScreen(
             verticalArrangement = if (uiState is UIState.Loading) Arrangement.Center else Arrangement.Top,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+
+            if (showSearchBar) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    OutlinedTextField(
+                        value = searchText,
+                        onValueChange = {
+                            searchText = it
+                            viewModel.onSearchQueryChange(it)
+                        },
+                        modifier = Modifier.weight(1f),
+                        placeholder = { Text("Search") },
+                        shape = RoundedCornerShape(25.dp),
+                        maxLines = 1
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Icon(Icons.Filled.Search, contentDescription = "Search")
+                }
+            }
             when (uiState) {
                 is UIState.Loading -> {
                     Column(
@@ -97,17 +124,16 @@ fun HomeScreen(
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         CircularProgressIndicator(
-                            modifier = Modifier.size(120.dp),
-                            color = Color.Red, // Force a very visible color
+                            modifier = Modifier.size(64.dp),
+                            color = Color.Blue, // Force a very visible color
                             strokeWidth = 10.dp
                         )
                     }
-
                 }
 
                 is UIState.Success<*> -> {
-                    val todos = (uiState as UIState.Success<List<Todo>>).data
-                    if (todos.isEmpty()) {
+                    val todos = filteredTodos
+                    if (allTodos.isEmpty() && searchText.isBlank()) {
                         Column(
                             modifier = Modifier.fillMaxSize(),
                             verticalArrangement = Arrangement.Center,
@@ -120,26 +146,26 @@ fun HomeScreen(
                                 textAlign = TextAlign.Center
                             )
                         }
-                    } else {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(8.dp),
-                            verticalAlignment = Alignment.CenterVertically
+                    } else if (todos.isEmpty() && searchText.isNotBlank()) {
+                        Column(
+                            modifier = Modifier.fillMaxSize(),
+                            verticalArrangement = Arrangement.Center,
+                            horizontalAlignment = Alignment.CenterHorizontally
                         ) {
-                            OutlinedTextField(
-                                value = searchText,
-                                onValueChange = { searchText = it },
-                                modifier = Modifier.weight(1f),
-                                placeholder = { Text("Search") },
-                                shape = RoundedCornerShape(25.dp),
-                                maxLines = 1
+                            Text(
+                                text = "No search results found",
+                                fontWeight = FontWeight(900),
+                                fontSize = 26.sp,
+                                textAlign = TextAlign.Center
                             )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Icon(Icons.Filled.Search, contentDescription = "Search")
                         }
+                    } else {
+
                         LazyColumn(modifier = Modifier.padding(8.dp)) {
-                            items(todos) { todo ->
+                            items(
+                                items = filteredTodos,
+                                key = { todo -> todo.id!! }
+                            ) { todo ->
                                 TodoItem(todo = todo)
                             }
                         }
@@ -147,7 +173,7 @@ fun HomeScreen(
                 }
 
                 is UIState.Error<*> -> {
-                    Text(text = (uiState as UIState.Error<String>).message)
+                    Text(text = (uiState as UIState.Error<*>).message.toString())
                 }
             }
         }
