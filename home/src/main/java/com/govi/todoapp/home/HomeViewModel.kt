@@ -3,6 +3,7 @@ package com.govi.todoapp.home
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavHostController
+import androidx.navigation.NavOptions
 import com.govi.todoapp.core.coroutines.DispatcherProvider
 import com.govi.todoapp.core.navigation.Routes
 import com.govi.todoapp.core.navigation.Routes.AddTodo
@@ -40,13 +41,14 @@ class HomeViewModel @Inject constructor(
     val uiState = _uiState.asStateFlow()
 
     private val _searchQuery = MutableStateFlow("")
+    val searchQuery = _searchQuery
     private val _allTodos = MutableStateFlow<List<Todo>>(emptyList())
     val allTodos: StateFlow<List<Todo>> = _allTodos.asStateFlow()
 
 
     @OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
     val filteredTodos: StateFlow<List<Todo>> = _searchQuery
-        .debounce(2000.milliseconds) // Reduced debounce
+        .debounce(2000.milliseconds)
         .distinctUntilChanged()
         .flatMapLatest { query ->
             getTodosUseCase(query).flowOn(dispatcherProvider.io)
@@ -75,13 +77,7 @@ class HomeViewModel @Inject constructor(
     }
 
     fun navigateToAddTodo() {
-        navHostController.navigate(AddTodo.route) {
-            launchSingleTop = true
-            popUpTo(Routes.Home.route) {
-                inclusive = true
-            }
-
-        }
+        navHostController.navigate(AddTodo.route, navOptions = getNavOptionsForAddTodo())
     }
 
 
@@ -89,4 +85,10 @@ class HomeViewModel @Inject constructor(
         _searchQuery.value = query
     }
 
+    fun getNavOptionsForAddTodo(): NavOptions {
+        return NavOptions.Builder().apply {
+            setLaunchSingleTop(true)
+            setPopUpTo(Routes.Home.route, inclusive = true)
+        }.build()
+    }
 }

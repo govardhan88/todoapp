@@ -53,4 +53,9 @@ dependencies {
     implementation(libs.hilt.navigation.compose)
     implementation(libs.hilt.android)
     ksp(libs.hilt.android.compiler)
+
+    testImplementation(libs.bundles.unit.tests)
+    testImplementation(libs.bundles.coroutines.test)
+    testImplementation(libs.bundles.mockito)
+    testImplementation(libs.bundles.turbine)
 }
