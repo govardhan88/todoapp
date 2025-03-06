@@ -9,5 +9,5 @@ import javax.inject.Inject
 class AddTodoUseCase @Inject constructor(
     private val repository: TodoRepository
 ) {
-    suspend operator fun invoke(todo: Todo) = repository.addTodo(todo)
+    suspend operator fun invoke(todo: Todo): Long = repository.addTodo(todo)
 }

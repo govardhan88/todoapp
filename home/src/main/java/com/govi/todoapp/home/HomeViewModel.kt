@@ -21,6 +21,7 @@ import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -37,21 +38,33 @@ class HomeViewModel @Inject constructor(
     private val dispatcherProvider: DispatcherProvider,
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow<UIState>(UIState.Loading)
+    private val _uiState = MutableStateFlow<UIState<*>>(UIState.Loading)
     val uiState = _uiState.asStateFlow()
 
     private val _searchQuery = MutableStateFlow("")
-    val searchQuery = _searchQuery
+    val searchQuery = _searchQuery.asStateFlow()
     private val _allTodos = MutableStateFlow<List<Todo>>(emptyList())
     val allTodos: StateFlow<List<Todo>> = _allTodos.asStateFlow()
 
+    private val _isDebouncing = MutableStateFlow(false)
+    val isDebouncing: StateFlow<Boolean> = _isDebouncing.asStateFlow()
+
+    init {
+        loadTodos()
+    }
 
     @OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
     val filteredTodos: StateFlow<List<Todo>> = _searchQuery
         .debounce(2000.milliseconds)
+        .onEach {
+            _isDebouncing.value = true
+        }
         .distinctUntilChanged()
         .flatMapLatest { query ->
             getTodosUseCase(query).flowOn(dispatcherProvider.io)
+        }
+        .onEach {
+            _isDebouncing.value = false
         }
         .stateIn(
             scope = viewModelScope,
@@ -88,7 +101,15 @@ class HomeViewModel @Inject constructor(
     fun getNavOptionsForAddTodo(): NavOptions {
         return NavOptions.Builder().apply {
             setLaunchSingleTop(true)
-            setPopUpTo(Routes.Home.route, inclusive = true)
+            setPopUpTo(Routes.Home.route, inclusive = false)
         }.build()
+    }
+
+    fun clearSearchQuery() {
+        _searchQuery.value = ""
+    }
+
+    fun setErrorState(errorMsg: String) {
+        _uiState.value = UIState.Error(message = errorMsg)
     }
 }

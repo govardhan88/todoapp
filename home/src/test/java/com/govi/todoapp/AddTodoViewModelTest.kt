@@ -3,22 +3,24 @@ package com.govi.todoapp
 import androidx.navigation.NavHostController
 import app.cash.turbine.test
 import com.govi.todoapp.add_todo.AddTodoViewModel
-import com.govi.todoapp.core.navigation.Routes
+import com.govi.todoapp.core.util.UIState
 import com.govi.todoapp.domain.AddTodoUseCase
 import com.govi.todoapp.domain.model.Todo
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
-import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.mockito.Mock
+import org.mockito.Mockito.times
 import org.mockito.Mockito.verify
 import org.mockito.Mockito.`when`
 import org.mockito.MockitoAnnotations
+import org.mockito.kotlin.any
+import org.mockito.kotlin.doAnswer
+import org.mockito.kotlin.whenever
 
 @ExperimentalCoroutinesApi
 class AddTodoViewModelTest {
@@ -34,94 +36,92 @@ class AddTodoViewModelTest {
 
     private lateinit var viewModel: AddTodoViewModel
 
+    private val todo = Todo(eventTitle = "Test Todo", id = null)
+
 
     @Before
     fun setup() {
         MockitoAnnotations.openMocks(this)
-        viewModel = AddTodoViewModel(addTodoUseCase, mainCoroutineRule.dispatcherProvider, navHostController)
-    }
-
-    @After
-    fun tearDown() {
-        Dispatchers.resetMain()
-    }
-
-    @Test
-    fun `onTodoTextChange updates todoText`() = runTest {
-        val newText = "Test Todo"
-        viewModel.onTodoTextChange(newText)
-        viewModel.todoText.test {
-            assertEquals(newText, awaitItem())
-            cancelAndIgnoreRemainingEvents()
-        }
+        viewModel = AddTodoViewModel(
+            addTodoUseCase = addTodoUseCase,
+            dispatcherProvider = mainCoroutineRule.dispatcherProvider,
+            navHostController = navHostController
+        )
     }
 
     @Test
-    fun `addTodo succeeds and sets isTodoAdded to true`() = runTest {
-        val todoText = "Test Todo"
-        viewModel.onTodoTextChange(todoText)
-        `when`(addTodoUseCase(Todo(eventTitle = todoText, id = null))).then {}
-
-        viewModel.addTodo()
-        mainCoroutineRule.testDispatcher.scheduler.advanceUntilIdle()
-
-        viewModel.isTodoAdded.test {
-            assertEquals(true, awaitItem())
-            cancelAndIgnoreRemainingEvents()
+    fun addTodo_emptyEventTitle_setsErrorState() = runTest {
+        viewModel.uiState.test {
+            skipItems(1)
+            viewModel.addTodo("")
+            assertEquals(UIState.Loading, awaitItem())
+            assertEquals(UIState.Error("Failed to add TODO"), awaitItem())
         }
-        viewModel.isLoading.test {
-            assertEquals(false, awaitItem())
-            cancelAndIgnoreRemainingEvents()
-        }
-        verify(addTodoUseCase).invoke(Todo(eventTitle = todoText, id = null))
     }
 
     @Test
-    fun `addTodo fails with blank todoText and sets error`() = runTest {
-        viewModel.onTodoTextChange("")
-        viewModel.addTodo()
-        mainCoroutineRule.testDispatcher.scheduler.advanceUntilIdle()
-
-        viewModel.error.test {
-            assertEquals("Failed to add TODO", awaitItem())
-            cancelAndIgnoreRemainingEvents()
+    fun addTodo_errorEventTitle_setsErrorState() = runTest {
+        viewModel.uiState.test {
+            skipItems(1)
+            viewModel.addTodo("error")
+            assertEquals(UIState.Loading, awaitItem())
+            assertEquals(UIState.Error("Failed to add TODO"), awaitItem())
         }
-        viewModel.isLoading.test {
-            assertEquals(false, awaitItem())
+    }
+
+    @Test
+    fun addTodo_validEventTitle_setsSuccessState() = runTest {
+        whenever(addTodoUseCase.invoke(todo = todo)).then { 1L }
+        viewModel.uiState.test {
+            skipItems(1)
+            viewModel.addTodo("Test Todo")
+            assertEquals(UIState.Loading, awaitItem())
+            mainCoroutineRule.testDispatcher.scheduler.advanceTimeBy(3000L)
+            assertEquals(UIState.Success(true), awaitItem())
             cancelAndIgnoreRemainingEvents()
         }
     }
 
     @Test
-    fun `addTodo fails with exception and sets error`() = runTest {
-        val todoText = "Test Todo"
-        viewModel.onTodoTextChange(todoText)
-        `when`(addTodoUseCase(Todo(eventTitle = todoText, id = null))).thenThrow(RuntimeException("Test Exception"))
+    fun addTodo_validEventTitle_callsAddTodoUseCase() = runTest {
+        whenever(addTodoUseCase.invoke(any())).doAnswer { 1L }
+        viewModel.addTodo("Test Todo")
+        mainCoroutineRule.testDispatcher.scheduler.advanceTimeBy(3000L)
+        verify(addTodoUseCase, times(1)).invoke(todo)
+    }
 
-        viewModel.addTodo()
-        mainCoroutineRule.testDispatcher.scheduler.advanceUntilIdle()
-
-        viewModel.error.test {
-            assertEquals("Failed to add TODO", awaitItem())
-            cancelAndIgnoreRemainingEvents()
-        }
-        viewModel.isLoading.test {
-            assertEquals(false, awaitItem())
-            cancelAndIgnoreRemainingEvents()
+    @Test
+    fun addTodo_exceptionThrown_setsErrorState() = runTest {
+        `when`(
+            addTodoUseCase.invoke(todo)
+        ).then { throw Exception("Test Exception") }
+        viewModel.uiState.test {
+            skipItems(1)
+            viewModel.addTodo("Test Todo")
+            assertEquals(UIState.Loading, awaitItem())
+            assertEquals(UIState.Error("Failed to add TODO"), awaitItem())
         }
     }
 
     @Test
-    fun `navigateToHome navigates to Home route`() = runTest {
-        viewModel.navigateToHome()
-        verify(navHostController).navigate(Routes.Home.route)
+    fun navigateBack_popsBackStack() = runTest {
+        viewModel.navigateBack()
+        verify(navHostController).popBackStack()
     }
 
     @Test
-    fun `resetTodoAdded sets isTodoAdded to false`() = runTest {
-        viewModel.resetTodoAdded()
-        viewModel.isTodoAdded.test {
-            assertEquals(false, awaitItem())
+    fun resetUiState_setsIdleState() = runTest {
+        viewModel.resetUiState()
+        assertEquals(UIState.Idle, viewModel.uiState.first())
+    }
+
+    @Test
+    fun addTodo_validEventTitle_setsLoadingState() = runTest {
+        whenever(addTodoUseCase.invoke(any())).doAnswer { 1L }
+        viewModel.uiState.test {
+            skipItems(1)
+            viewModel.addTodo("Test Todo")
+            assertEquals(UIState.Loading, awaitItem())
             cancelAndIgnoreRemainingEvents()
         }
     }

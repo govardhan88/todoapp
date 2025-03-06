@@ -5,8 +5,9 @@ package com.govi.todoapp.core.util
  */
 
 
-sealed class UIState {
-    object Loading : UIState()
-    data class Success<T>(val data: T) : UIState()
-    data class Error<T>(val message: T) : UIState()
+sealed class UIState<T> {
+    object Idle : UIState<Nothing>()
+    object Loading : UIState<Nothing>()
+    data class Success<T>(val data: T) : UIState<T>()
+    data class Error<T>(val message: T) : UIState<T>()
 }
